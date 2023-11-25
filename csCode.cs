@@ -1,3 +1,23 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+
+class Program
+{
+    public static void Main()
+    {
+
+        var _outputs = new int[] { 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1 };
+        var _set = Proposition.Calculate(_outputs);
+        string _formula = Proposition.GetFormula(_set);
+
+        Console.WriteLine(_formula);
+    }
+
+
+}
 
 class Proposition
 {
@@ -30,7 +50,7 @@ class Proposition
 
                     if (_isAllTrue)
                     {
-                        var _tuple = (_items.ElementAt(j).Select(x => _size - x), _items.ElementAt(j).Select(item => _target >> item == 1).ToArray());
+                        var _tuple = (_items.ElementAt(j).Select(x => _size - x), _items.ElementAt(j).Select(item => (_target >> item & 1) == 1).ToArray());
                         _set.Add(_tuple);
                         _found = true;
 
@@ -79,3 +99,8 @@ class Proposition
                 (t1, t2) => t1.Concat(new T[] { t2 }));
     }
 }
+
+// 불필요한 계산 줄이기
+// 함소 호출 줄이기
+// 가비지 생성 최소화하기
+// 루프 줄이기
