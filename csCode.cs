@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 class Program
@@ -15,10 +13,7 @@ class Program
         string _formula = Proposition.GetFormula(_set);
 
         Console.WriteLine(_formula);
-        Proposition.Trim(_set, 4);
     }
-
-
 }
 
 class Proposition
@@ -66,6 +61,7 @@ class Proposition
             _found = false;
         }
 
+        Trim(_set, _size);
         return _set;
     }
 
@@ -97,33 +93,44 @@ class Proposition
     {
         int _sizeTo2Ex = (int)Math.Pow(2, _size);
         var _countArray = new int[_sizeTo2Ex];
+        var _dictionary = new Dictionary<(IEnumerable<int>, bool[]), int[]>();
+
         foreach (var _tuple in _set)
         {
             int _itemsCount = _tuple.Item1.Count();
             bool[] _exclusiveSaves = new bool[_sizeTo2Ex];
+            for (int i = 0; i < _sizeTo2Ex; i++)
+                _exclusiveSaves[i] = true;
 
             for (int i = 0; i < _itemsCount; i++)
             {
                 int _item1 = _tuple.Item1.ElementAt(i);
                 bool _isTrue = _tuple.Item2.ElementAt(i);
-                Console.Write($"[{_item1}:{_isTrue}]");
-                Array.ForEach(
-                    Enumerable.Range(0, _sizeTo2Ex)
+                int[] _positions = Enumerable.Range(0, _sizeTo2Ex)
                     .Where(x => (x >> (_size - _item1) & 1) != (_isTrue ? 1 : 0))
-                    .ToArray()
-                    , n => _exclusiveSaves[n] = true);
-            }
-            Console.WriteLine($"{{{string.Join(", ", _exclusiveSaves)}}}");
+                    .ToArray();
+                Array.ForEach(_positions, n => _exclusiveSaves[n] = false);
 
+            }
+            _dictionary.Add(_tuple, Enumerable.Range(0, _sizeTo2Ex).Where(x => _exclusiveSaves[x]).ToArray());
             for (int i = 0; i < _sizeTo2Ex; i++)
             {
-                if (!_exclusiveSaves[i])
+                if (_exclusiveSaves[i])
                 {
                     _countArray[i]++;
                 }
             }
         }
-        Console.WriteLine($"{{{string.Join(", ", _countArray)}}}");
+
+        bool _isTrimmed = false;
+        do
+        {
+            var _redundant = _set.FirstOrDefault(t => _dictionary[t].All(x => _countArray[x] != 1));
+            if (_redundant.Item1 == null)
+                _isTrimmed = true;
+            else
+                _set.Remove(_redundant);
+        } while (!_isTrimmed);
     }
 
     static IEnumerable<IEnumerable<T>>
