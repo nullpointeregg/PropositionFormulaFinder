@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 class Program
@@ -9,11 +10,12 @@ class Program
     public static void Main()
     {
 
-        var _outputs = new int[] { 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1 };
+        var _outputs = new int[] { 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1  };
         var _set = Proposition.Calculate(_outputs);
         string _formula = Proposition.GetFormula(_set);
 
         Console.WriteLine(_formula);
+        Proposition.Trim(_set, 4);
     }
 
 
@@ -41,11 +43,12 @@ class Proposition
             for (int i = 0; i < _size && !_found; i++)
             {
                 var _items = GetKCombs(Enumerable.Range(0, _size), i + 1);
-                for (int j = 0; j < _items.Count() && !_found; j++)
+                int _itemsCount = _items.Count();
+                for (int j = 0; j < _itemsCount && !_found; j++)
                 {
                     bool _isAllTrue = Enumerable
                         .Range(0, _outputs.Length)
-                        .Where(num => _items.ElementAt(j).All(item => (num & (1 << item)) == (_target & (1 << item))))
+                        .Where(num => _items.ElementAt(j).All(item => (num >> item & 1) == (_target >> item & 1)))
                         .All(x => _outputs[x]);
 
                     if (_isAllTrue)
@@ -54,7 +57,7 @@ class Proposition
                         _set.Add(_tuple);
                         _found = true;
 
-                        _indexes.RemoveWhere(x => _items.ElementAt(j).All(item => (x & (1 << item)) == (_target & (1 << item))));
+                        _indexes.RemoveWhere(x => _items.ElementAt(j).All(item => (x >> item & 1) == (_target >> item & 1)));
                         break;
                     }
                 }
@@ -88,6 +91,39 @@ class Proposition
         }
 
         return _sb.ToString();
+    }
+
+    public static void Trim(HashSet<(IEnumerable<int>, bool[])> _set, int _size)
+    {
+        int _sizeTo2Ex = (int)Math.Pow(2, _size);
+        var _countArray = new int[_sizeTo2Ex];
+        foreach (var _tuple in _set)
+        {
+            int _itemsCount = _tuple.Item1.Count();
+            bool[] _exclusiveSaves = new bool[_sizeTo2Ex];
+
+            for (int i = 0; i < _itemsCount; i++)
+            {
+                int _item1 = _tuple.Item1.ElementAt(i);
+                bool _isTrue = _tuple.Item2.ElementAt(i);
+                Console.Write($"[{_item1}:{_isTrue}]");
+                Array.ForEach(
+                    Enumerable.Range(0, _sizeTo2Ex)
+                    .Where(x => (x >> (_size - _item1) & 1) != (_isTrue ? 1 : 0))
+                    .ToArray()
+                    , n => _exclusiveSaves[n] = true);
+            }
+            Console.WriteLine($"{{{string.Join(", ", _exclusiveSaves)}}}");
+
+            for (int i = 0; i < _sizeTo2Ex; i++)
+            {
+                if (!_exclusiveSaves[i])
+                {
+                    _countArray[i]++;
+                }
+            }
+        }
+        Console.WriteLine($"{{{string.Join(", ", _countArray)}}}");
     }
 
     static IEnumerable<IEnumerable<T>>
