@@ -2,4 +2,4 @@
 
 Use Program.Main method for the sample test!
 
-The program only finds Sum of Factors for now.
+The program only finds Sum of Products for now.
